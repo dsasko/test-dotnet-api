@@ -1,3 +1,10 @@
+using dotenv.net;
+
+DotEnv.Load();
+var envVars = DotEnv.Read();
+var clientId = envVars["CLIENT_ID"];
+var clientSecret = envVars["CLIENT_SECRET"];
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
