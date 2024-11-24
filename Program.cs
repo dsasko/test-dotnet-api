@@ -21,14 +21,18 @@ builder.Services.AddCors(options =>
         builder =>
         {
             builder.WithOrigins("http://localhost:5173")
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        });
+                .AllowAnyMethod()
+                .AllowAnyHeader()
+                .WithExposedHeaders("Content-Length", "Content-Type", "Access-Control-Allow-Origin");
+    });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Apply CORS before routes
+app.UseCors("AllowOrigin");
+
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -55,7 +59,7 @@ app.MapGet("/flights", async (HttpContext httpContext) =>
     var requestUri = "https://test.api.amadeus.com/v2/shopping/flight-offers";
 
     var uriBuilder = new UriBuilder(requestUri);
-    var query = new FormUrlEncodedContent(queryParams).ReadAsStringAsync().Result;
+    var query = await new FormUrlEncodedContent(queryParams).ReadAsStringAsync();
     uriBuilder.Query = query;
 
     // Create an HTTP request message
@@ -70,7 +74,14 @@ app.MapGet("/flights", async (HttpContext httpContext) =>
     // Send the request and obtain the response
     var response = await httpClient.SendAsync(request);
 
-    return await response.Content.ReadAsStringAsync();
+    // Read the response content as a string (JSON)
+    var jsonResponse = await response.Content.ReadAsStringAsync();
+
+    // Explicitly set the response content type to JSON
+    httpContext.Response.ContentType = "application/json";
+
+    // Directly return the JSON string; let ASP.NET handle the content length
+    return Results.Content(jsonResponse, "application/json");
 })
 .WithName("GetFlights");
 
@@ -93,9 +104,6 @@ static async Task<string?> ProcessRepositoriesAsync(HttpClient client, string id
 
     // Send the HTTP POST request with content.
     var response = await client.PostAsync(requestUri, content);
-
-    // Ensure a successful response.
-    response.EnsureSuccessStatusCode();
 
     // Parse the response content.
     var responseContent = await response.Content.ReadAsStringAsync();
