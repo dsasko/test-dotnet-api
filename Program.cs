@@ -77,11 +77,20 @@ app.MapGet("/flights", async (HttpContext httpContext) =>
     // Read the response content as a string (JSON)
     var jsonResponse = await response.Content.ReadAsStringAsync();
 
-    // Explicitly set the response content type to JSON
-    httpContext.Response.ContentType = "application/json";
+    // Parse the JSON response and extract the "data" property
+    var jsonDoc = JsonDocument.Parse(jsonResponse);
+    if (jsonDoc.RootElement.TryGetProperty("data", out var dataElement))
+    {
+        // Extract only the "data" part
+        var data = dataElement.ToString();
+        
+        // Return the "data" part as JSON
+        httpContext.Response.ContentType = "application/json";
+        return Results.Content(data, "application/json");
+    }
 
-    // Directly return the JSON string; let ASP.NET handle the content length
-    return Results.Content(jsonResponse, "application/json");
+    // If "data" is not present, return an empty array or error message
+    return Results.Content("[]", "application/json"); // Or handle an error case
 })
 .WithName("GetFlights");
 
