@@ -3,11 +3,6 @@
 dotnet run
 ```
 
-or 
-```sh
-dotnet watch run
-```
-
 # How the project was set up
 
 1. Initializing the project
@@ -28,3 +23,8 @@ dotnet add package dotenv.net
 ```
 
 5. Initialize git
+
+# TODO
+- [ ] expose city-search endpoint
+- [ ] cache results
+- [ ] add proper error handling
